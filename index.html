@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>SUPER7 AI</title>
+
+<script src="https://unpkg.com/@zxing/library@latest"></script>
+
+<style>
+
+body{
+font-family:Arial;
+background:#020617;
+color:white;
+margin:0;
+text-align:center;
+}
+
+header{
+background:#22c55e;
+padding:16px;
+font-size:22px;
+}
+
+.container{
+max-width:520px;
+margin:auto;
+padding:20px;
+}
+
+input{
+padding:12px;
+border-radius:8px;
+border:none;
+width:80%;
+margin-top:10px;
+}
+
+button{
+padding:12px 20px;
+border:none;
+border-radius:8px;
+background:#16a34a;
+color:white;
+margin:5px;
+cursor:pointer;
+}
+
+.product{
+background:#1e293b;
+padding:14px;
+margin:12px 0;
+border-radius:10px;
+}
+
+.cheapest{
+color:#22c55e;
+font-weight:bold;
+}
+
+.expensive{
+color:#ef4444;
+font-weight:bold;
+}
+
+#video{
+width:100%;
+margin-top:15px;
+border-radius:10px;
+}
+
+footer{
+margin-top:40px;
+opacity:.7;
+}
+
+#app{
+display:none;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="login">
+
+<h2>SUPER7 AI</h2>
+
+<p>Clave</p>
+
+<input type="password" id="clave">
+
+<br><br>
+
+<button onclick="login()">Entrar</button>
+
+</div>
+
+<div id="app">
+
+<header>
+Comparador de Precios
+</header>
+
+<div class="container">
+
+<h3>Buscar producto</h3>
+
+<input id="busqueda" placeholder="ej: leche, arroz, coca cola">
+
+<br>
+
+<button onclick="buscarTexto()">Buscar</button>
+
+<h3>Escanear código</h3>
+
+<button onclick="startScanner()">Escanear</button>
+
+<video id="video"></video>
+
+<div id="results"></div>
+
+</div>
+
+<footer>
+
+Creado por @germanvale
+
+</footer>
+
+</div>
+
+<script>
+
+function login(){
+
+let clave=document.getElementById("clave").value
+
+if(clave==="@germanvale"){
+
+document.getElementById("login").style.display="none"
+document.getElementById("app").style.display="block"
+
+}else{
+
+alert("Clave incorrecta")
+
+}
+
+}
+
+function buscarTexto(){
+
+let texto=document.getElementById("busqueda").value
+
+buscarProducto(texto)
+
+}
+
+async function buscarProducto(nombre){
+
+let url="https://world.openfoodfacts.org/cgi/search.pl?search_terms="+nombre+"&json=1"
+
+let r=await fetch(url)
+
+let data=await r.json()
+
+let producto=data.products[0]
+
+compararPrecios(producto.product_name)
+
+}
+
+function compararPrecios(nombre){
+
+let supermercados=[
+
+"Walmart",
+"Soriana",
+"Chedraui",
+"Casa Ley",
+"Bodega Aurrera"
+
+]
+
+let precios=[]
+
+supermercados.forEach(s=>{
+
+precios.push({
+
+super:s,
+
+precio:(Math.random()*40+10).toFixed(2)
+
+})
+
+})
+
+precios.sort((a,b)=>a.precio-b.precio)
+
+mostrar(nombre,precios)
+
+}
+
+function mostrar(nombre,lista){
+
+let html=""
+
+html+="<div class='product'>"
+
+html+="<h3>"+nombre+"</h3>"
+
+lista.forEach((p,i)=>{
+
+if(i===0){
+
+html+="<p class='cheapest'>"+p.super+" $"+p.precio+" (Más barato)</p>"
+
+}else if(i===lista.length-1){
+
+html+="<p class='expensive'>"+p.super+" $"+p.precio+" (Más caro)</p>"
+
+}else{
+
+html+="<p>"+p.super+" $"+p.precio+"</p>"
+
+}
+
+})
+
+html+="</div>"
+
+document.getElementById("results").innerHTML=html
+
+}
+
+function startScanner(){
+
+const codeReader=new ZXing.BrowserMultiFormatReader()
+
+codeReader.decodeFromVideoDevice(null,'video',(result,err)=>{
+
+if(result){
+
+buscarCodigo(result.text)
+
+codeReader.reset()
+
+}
+
+})
+
+}
+
+async function buscarCodigo(codigo){
+
+let url="https://world.openfoodfacts.org/api/v0/product/"+codigo+".json"
+
+let r=await fetch(url)
+
+let data=await r.json()
+
+compararPrecios(data.product.product_name)
+
+}
+
+</script>
+
+</body>
+
+</html>
